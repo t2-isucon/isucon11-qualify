@@ -21,3 +21,9 @@
 # Import all .cnf files from configuration directory
 !includedir /etc/mysql/conf.d/
 !includedir /etc/mysql/mariadb.conf.d/
+
+[mysqld]
+slow_query_log=ON
+long_query_time = 5
+slow_query_log_file = /tmp/mysql-slow.log
+
