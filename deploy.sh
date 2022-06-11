@@ -2,6 +2,8 @@
 
 set -e
 
+git pull origin nekottyo
+
 ssh  isucon12-02 /bin/bash <<-EOF
 sudo su - isucon
 pushd webapp
