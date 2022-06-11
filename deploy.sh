@@ -19,7 +19,7 @@ make
 sudo su
 systemctl restart isucondition.go.service
 systemctl restart nginx
-systemctl stop mysql
+systemctl restart mysql
 :>  /var/log/nginx/access.log
 :>  /var/log/nginx/error.log
 exit
