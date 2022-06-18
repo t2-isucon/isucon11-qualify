@@ -4,7 +4,8 @@ repo_path=/home/isucon/isucon11-qualify
 branch={$1:-main} # default: main
 
 echo 'running deploy to this server'
-git -C ${repo_path} pull origin master
+git -C ${repo_path} pull origin main
+git -C ${repo_path} switch ${branch}
 ${repo_path}/deploy.sh
 
 echo 'running deploy to other servers, isu2 and isu3'
