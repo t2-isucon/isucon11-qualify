@@ -4,15 +4,6 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
-echo 'Restarting Go...'
-sudo systemctl stop isucondition.go.service
-cd $DIR/webapp/go/
-/home/isucon/local/go/bin/go build -o isucondition
-cp isucondition /home/isucon/webapp/go/
-cd $DIR
-sudo systemctl restart isucondition.go.service
-echo 'Restarted!'
-
 echo 'Updating config file...'
 # env
 sudo cp "$DIR/env.sh" /home/isucon/env.sh
@@ -24,6 +15,15 @@ sudo cp "$DIR/nginx/isucondition.conf" /etc/nginx/sites-enabled/isucondition.con
 # mysql
 sudo cp "$DIR/my.cnf" /etc/mysql/conf.d/my.cnf
 echo 'Updated config file!'
+
+echo 'Restarting Go...'
+sudo systemctl stop isucondition.go.service
+cd $DIR/webapp/go/
+/home/isucon/local/go/bin/go build -o isucondition
+cp isucondition /home/isucon/webapp/go/
+cd $DIR
+sudo systemctl restart isucondition.go.service
+echo 'Restarted!'
 
 echo 'Restarting services...'
 sudo systemctl restart mysql.service
