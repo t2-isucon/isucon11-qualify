@@ -14,6 +14,9 @@ sudo systemctl restart isucondition.go.service
 echo 'Restarted!'
 
 echo 'Updating config file...'
+# env
+sudo cp "$DIR/env.sh" /home/isucon/env.sh
+
 # nginx
 sudo cp "$DIR/nginx/nginx.conf" /etc/nginx/nginx.conf
 sudo cp "$DIR/nginx/isucondition.conf" /etc/nginx/sites-enabled/isucondition.conf
