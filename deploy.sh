@@ -8,22 +8,20 @@ echo 'Restarting Go...'
 cd $DIR/webapp/go/
 /home/isucon/local/go/bin/go build -o isucondition
 sudo systemctl stop isucondition.go.service
-cp isuumo /home/isucon/isucondition/webapp/go/
 cd $DIR
 sudo systemctl restart isucondition.go.service
 echo 'Restarted!'
 
-sudo cp $DIR/systemd/* /etc/systemd/system/
-sudo systemctl daemon-reload
-
 echo 'Updating config file...'
-sudo cp "$DIR/nginx.conf" /etc/nginx/nginx.conf
-# sudo cp "$DIR/redis.conf" /etc/redis/redis.conf
-sudo cp "$DIR/mysqld.cnf" /etc/mysql/mysql.conf.d/mysqld.cnf
+# nginx
+sudo cp "$DIR/nginx/nginx.conf" /etc/nginx/nginx.conf
+sudo cp "$DIR/nginx/isucondition.conf" /etc/nginx/sites-enabled/isucondition.conf
+
+# mysql
+sudo cp "$DIR/my.cnf" /etc/mysql/conf.d/my.cnf
 echo 'Updated config file!'
 
 echo 'Restarting services...'
-# sudo systemctl restart redis.service
 sudo systemctl restart mysql.service
 sudo systemctl restart nginx.service
 echo 'Restarted!'
