@@ -4,6 +4,10 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
+echo 'Copy sql file...'
+sudo cp -r "$DIR/webapp/sql" /home/isucon/webapp/sql
+echo 'Copied sql file!'
+
 echo 'Updating config file...'
 # env
 sudo cp "$DIR/env.sh" /home/isucon/env.sh
