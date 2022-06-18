@@ -5,10 +5,10 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 echo 'Restarting Go...'
+sudo systemctl stop isucondition.go.service
 cd $DIR/webapp/go/
 /home/isucon/local/go/bin/go build -o isucondition
 cp isucondition /home/isucon/webapp/go/
-sudo systemctl stop isucondition.go.service
 cd $DIR
 sudo systemctl restart isucondition.go.service
 echo 'Restarted!'
