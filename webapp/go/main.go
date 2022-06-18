@@ -68,6 +68,13 @@ type Isu struct {
 	UpdatedAt  time.Time `db:"updated_at" json:"-"`
 }
 
+type IsuWithLatestCondition struct {
+	ID         int       `db:"id" json:"id"`
+	JIAIsuUUID string    `db:"jia_isu_uuid" json:"jia_isu_uuid"`
+	Condition  string    `db:"condition"`
+	Timestamp  time.Time `db:"timestamp"`
+}
+
 type IsuFromJIA struct {
 	Character string `json:"character"`
 }
@@ -1085,20 +1092,41 @@ func calculateConditionLevel(condition string) (string, error) {
 // GET /api/trend
 // ISUの性格毎の最新のコンディション情報
 func getTrend(c echo.Context) error {
-	characterList := []Isu{}
-	err := db.Select(&characterList, "SELECT `character` FROM `isu` GROUP BY `character`")
-	if err != nil {
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
+	characterList := [...]string{"いじっぱり", "うっかりや", "おくびょう", "おだやか", "おっとり", "おとなしい", "がんばりや", "きまぐれ", "さみしがり", "しんちょう", "すなお", "ずぶとい", "せっかち", "てれや", "なまいき", "のうてんき", "のんき", "ひかえめ", "まじめ", "むじゃき", "やんちゃ", "ゆうかん", "ようき", "れいせい", "わんぱく"}
 
 	res := []TrendResponse{}
 
 	for _, character := range characterList {
-		isuList := []Isu{}
-		err = db.Select(&isuList,
-			"SELECT * FROM `isu` WHERE `character` = ?",
-			character.Character,
+		isuList := []IsuWithLatestCondition{}
+		err := db.Select(&isuList,
+			`SELECT
+			isu.id AS id,
+			isu.jia_isu_uuid AS jia_isu_uuid,
+			isu_condition.condition AS `+"`"+`condition`+"`"+`,
+			isu_condition.timestamp AS timestamp
+		FROM
+			isu
+			LEFT JOIN (
+				SELECT
+					jia_isu_uuid,
+					`+"`"+`condition`+"`"+`,
+					timestamp
+				FROM
+					isu_condition
+				WHERE
+					id IN (
+						SELECT
+							max(id)
+						FROM
+							isu_condition
+						GROUP BY
+							jia_isu_uuid
+					)
+			) isu_condition ON isu.jia_isu_uuid = isu_condition.jia_isu_uuid
+		WHERE
+			isu_condition.condition IS NOT NULL
+			AND `+"`"+`character`+"`"+` = ?`,
+			character,
 		)
 		if err != nil {
 			c.Logger().Errorf("db error: %v", err)
@@ -1109,35 +1137,22 @@ func getTrend(c echo.Context) error {
 		characterWarningIsuConditions := []*TrendCondition{}
 		characterCriticalIsuConditions := []*TrendCondition{}
 		for _, isu := range isuList {
-			conditions := []IsuCondition{}
-			err = db.Select(&conditions,
-				"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY timestamp DESC",
-				isu.JIAIsuUUID,
-			)
+			conditionLevel, err := calculateConditionLevel(isu.Condition)
 			if err != nil {
-				c.Logger().Errorf("db error: %v", err)
+				c.Logger().Error(err)
 				return c.NoContent(http.StatusInternalServerError)
 			}
-
-			if len(conditions) > 0 {
-				isuLastCondition := conditions[0]
-				conditionLevel, err := calculateConditionLevel(isuLastCondition.Condition)
-				if err != nil {
-					c.Logger().Error(err)
-					return c.NoContent(http.StatusInternalServerError)
-				}
-				trendCondition := TrendCondition{
-					ID:        isu.ID,
-					Timestamp: isuLastCondition.Timestamp.Unix(),
-				}
-				switch conditionLevel {
-				case "info":
-					characterInfoIsuConditions = append(characterInfoIsuConditions, &trendCondition)
-				case "warning":
-					characterWarningIsuConditions = append(characterWarningIsuConditions, &trendCondition)
-				case "critical":
-					characterCriticalIsuConditions = append(characterCriticalIsuConditions, &trendCondition)
-				}
+			trendCondition := TrendCondition{
+				ID:        isu.ID,
+				Timestamp: isu.Timestamp.Unix(),
+			}
+			switch conditionLevel {
+			case "info":
+				characterInfoIsuConditions = append(characterInfoIsuConditions, &trendCondition)
+			case "warning":
+				characterWarningIsuConditions = append(characterWarningIsuConditions, &trendCondition)
+			case "critical":
+				characterCriticalIsuConditions = append(characterCriticalIsuConditions, &trendCondition)
 			}
 
 		}
@@ -1153,7 +1168,7 @@ func getTrend(c echo.Context) error {
 		})
 		res = append(res,
 			TrendResponse{
-				Character: character.Character,
+				Character: character,
 				Info:      characterInfoIsuConditions,
 				Warning:   characterWarningIsuConditions,
 				Critical:  characterCriticalIsuConditions,
