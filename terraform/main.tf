@@ -24,6 +24,15 @@ module "aws_isucon_sg" {
   egress_rules        = ["all-all"]
 }
 
+data "aws_key_pair" "key" {
+  include_public_key = true
+
+  filter {
+    name   = "tag:isucon"
+    values = ["true"]
+  }
+}
+
 module "ec2_instance" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "~> 3.0"
@@ -36,6 +45,7 @@ module "ec2_instance" {
   instance_type          = "t2.micro"
   vpc_security_group_ids = [module.aws_isucon_sg.security_group_id]
   subnet_id              = module.vpc.public_subnets[0]
+  key_name               = data.aws_key_pair.key.key_name
 
   tags = {
     Terraform = "true"
