@@ -25,6 +25,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 
+	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
+	sqlxtrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/jmoiron/sqlx"
 	echotrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/labstack/echo.v4"
 )
 
@@ -206,8 +208,9 @@ func NewMySQLConnectionEnv() *MySQLConnectionEnv {
 }
 
 func (mc *MySQLConnectionEnv) ConnectDB() (*sqlx.DB, error) {
+	sqltrace.Register("mysql", &mysql.MySQLDriver{}, sqltrace.WithServiceName("c-isucon11-db"))
 	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?interpolateParams=true&parseTime=true&loc=Asia%%2FTokyo", mc.User, mc.Password, mc.Host, mc.Port, mc.DBName)
-	return sqlx.Open("mysql", dsn)
+	return sqlxtrace.Open("mysql", dsn)
 }
 
 func init() {
